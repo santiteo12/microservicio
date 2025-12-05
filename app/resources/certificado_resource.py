@@ -31,9 +31,7 @@ def certificado_en_pdf(alumno_id: int):
 
 @certificado_bp.route("/certificado/<int:alumno_id>/docx", methods=["GET"])
 def certificado_en_docx(alumno_id: int):
-    """
-    Genera un DOCX de certificado para el alumno.
-    """
+
     try:
         docx_io = AlumnoService.generar_certificado_alumno_regular(alumno_id, 'docx')
     except Exception as e:
@@ -49,9 +47,7 @@ def certificado_en_docx(alumno_id: int):
 
 @certificado_bp.route("/certificado/<int:alumno_id>/odt", methods=["GET"])
 def certificado_en_odt(alumno_id: int):
-    """
-    Genera un ODT de certificado para el alumno.
-    """
+
     try:
         odt_io = AlumnoService.generar_certificado_alumno_regular(alumno_id, 'odt')
     except Exception as e:
@@ -67,16 +63,13 @@ def certificado_en_odt(alumno_id: int):
 
 @certificado_bp.route("/certificado/<int:alumno_id>/test", methods=["GET"])
 def test_obtener_datos(alumno_id: int):
-    """
-    Endpoint de prueba: devuelve los datos combinados sin generar documento.
-    """
     alumno = AlumnoService.buscar_por_id(alumno_id)
     if not alumno:
         return jsonify({"error": "No se encontraron datos"}), 404
 
     context = AlumnoService._AlumnoService__obtener_alumno_compat(alumno)
 
-    # Convertir objetos a diccionarios serializables
+    # Convertir objetos a diccionarios
     def to_dict(obj):
         if hasattr(obj, '__dict__'):
             result = {}

@@ -6,7 +6,7 @@ from flask_marshmallow import Marshmallow
 ma = Marshmallow()
 
 def create_app():
-    """Factory para crear instancias de la app Flask."""
+
     app = Flask(__name__, instance_relative_config=False)
 
     # Configuración básica

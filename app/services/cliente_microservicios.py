@@ -7,10 +7,10 @@ from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_excep
 logger = logging.getLogger(__name__)
 
 class ClienteMicroservicios:
-    """
-    Cliente centralizado para comunicarse con otros microservicios.
-    Implementa reintentos y manejo de errores.
-    """
+
+    #Cliente centralizado para comunicarse con otros microservicios.
+    #Implementa reintentos y manejo de errores.
+
 
     @staticmethod
     @retry(
@@ -20,18 +20,6 @@ class ClienteMicroservicios:
         before_sleep=lambda retry_state: logger.warning(f"Reintentando obtener_alumno para {retry_state.args[0]}: intento {retry_state.attempt_number}")
     )
     def obtener_alumno(alumno_id: int) -> Optional[Dict[str, Any]]:
-        """
-        Llama a ms-alumno para obtener datos del alumno.
-
-        Respuesta esperada del ms-alumno:
-        {
-            "id": 1,
-            "nombre": "Juan",
-            "apellido": "Pérez",
-            "nro_legajo": "12345",
-            "nrodocumento": "35123456"
-        }
-        """
         try:
             url = f"{current_app.config['MS_ALUMNO_URL']}/api/v1/alumno/{alumno_id}"
             response = requests.get(url, timeout=5)
@@ -53,17 +41,7 @@ class ClienteMicroservicios:
         before_sleep=lambda retry_state: logger.warning(f"Reintentando obtener_datos_academicos para {retry_state.args[0]}: intento {retry_state.attempt_number}")
     )
     def obtener_datos_academicos(alumno_id: int) -> Optional[Dict[str, Any]]:
-        """
-        Llama a ms-gestion-academica para obtener especialidad, facultad, etc.
 
-        Respuesta esperada:
-        {
-            "especialidad": "Ingeniería en Sistemas",
-            "facultad": "Facultad de Ingeniería",
-            "plan": "Plan 2020",
-            "año_inscripcion": 2020
-        }
-        """
         try:
             url = f"{current_app.config['MS_ACADEMICA_URL']}/api/v1/academico/{alumno_id}"
             response = requests.get(url, timeout=5)
@@ -79,21 +57,17 @@ class ClienteMicroservicios:
 
     @staticmethod
     def obtener_datos_completos(alumno_id: int) -> Optional[Dict[str, Any]]:
-        """
-        Orquesta: obtiene datos de alumno + datos académicos y los combina.
-        Devuelve None si falla algo crítico.
-        """
+
         datos_alumno = ClienteMicroservicios.obtener_alumno(alumno_id)
         if not datos_alumno:
             return None
         
         datos_academicos = ClienteMicroservicios.obtener_datos_academicos(alumno_id)
         if not datos_academicos:
-            # Podría devolver solo datos del alumno o fallar. Depende de tu requerimiento.
+            
             logger.warning(f"No se obtuvieron datos académicos para alumno {alumno_id}")
             datos_academicos = {}
         
-        # Combinar ambos en un único contexto para el certificado
         contexto = {
             **datos_alumno,
             **datos_academicos

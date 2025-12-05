@@ -2,7 +2,7 @@
 Mock services para pruebas locales del microservicio de gestión de documentos.
 Simula ms-alumnos en puerto 5001 y ms-academica en puerto 5003.
 
-Uso:
+para ejecutar usar :
     python mock_services.py
 """
 
@@ -113,11 +113,9 @@ ACADEMICA_DB = {
     }
 }
 
-# ========== ENDPOINTS MS-ALUMNOS ==========
 
 @app.route('/api/v1/alumno/<alumno_id>', methods=['GET'])
 def get_alumno(alumno_id):
-    """Obtiene datos de un alumno específico."""
     if alumno_id in ALUMNOS_DB:
         return jsonify(ALUMNOS_DB[alumno_id]), 200
     else:
@@ -128,7 +126,6 @@ def get_alumno(alumno_id):
 
 @app.route('/api/v1/alumnos', methods=['GET'])
 def get_alumnos():
-    """Obtiene lista de todos los alumnos."""
     return jsonify({
         "total": len(ALUMNOS_DB),
         "alumnos": list(ALUMNOS_DB.values())
@@ -136,18 +133,15 @@ def get_alumnos():
 
 @app.route('/health', methods=['GET'])
 def health_alumnos():
-    """Health check para ms-alumnos."""
     return jsonify({
         "status": "healthy",
         "service": "ms-alumnos",
         "timestamp": datetime.utcnow().isoformat()
     }), 200
 
-# ========== ENDPOINTS MS-ACADEMICA ==========
 
 @app.route('/api/v1/academico/<alumno_id>', methods=['GET'])
 def get_academico(alumno_id):
-    """Obtiene datos académicos de un alumno específico."""
     if alumno_id in ACADEMICA_DB:
         return jsonify(ACADEMICA_DB[alumno_id]), 200
     else:
@@ -158,7 +152,6 @@ def get_academico(alumno_id):
 
 @app.route('/api/v1/academicos', methods=['GET'])
 def get_academicos():
-    """Obtiene lista de todos los registros académicos."""
     return jsonify({
         "total": len(ACADEMICA_DB),
         "academicos": list(ACADEMICA_DB.values())
@@ -166,18 +159,15 @@ def get_academicos():
 
 @app.route('/health', methods=['GET'])
 def health_academica():
-    """Health check para ms-academica."""
     return jsonify({
         "status": "healthy",
         "service": "ms-academica",
         "timestamp": datetime.utcnow().isoformat()
     }), 200
 
-# ========== ENDPOINT DE DIAGNÓSTICO ==========
 
 @app.route('/mock/info', methods=['GET'])
 def mock_info():
-    """Información sobre los mocks disponibles."""
     return jsonify({
         "service": "Mock Microservices",
         "endpoints": {

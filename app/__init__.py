@@ -2,11 +2,10 @@ import os
 from flask import Flask
 from flask_marshmallow import Marshmallow
 
-# Solo necesitamos Marshmallow para esquemas (validación/serialización de respuestas)
+# Solo necesitamos Marshmallow para esquemas
 ma = Marshmallow()
 
 def create_app():
-    """Factory para crear instancias de la app Flask."""
     app = Flask(__name__, instance_relative_config=False)
 
     # Configuración básica

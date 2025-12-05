@@ -46,7 +46,6 @@ class AlumnoRepository:
 
     @staticmethod
     def _init_data():
-        """Inicializa datos de prueba si no existen."""
         if AlumnoRepository._alumnos:
             return
 

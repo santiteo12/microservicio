@@ -1,6 +1,8 @@
+alumno : garcia santiago 
+
 # Microservicio de Documentos
 
-Este proyecto es un microservicio Flask para la gestión de documentos, parte de un sistema de microservicios para la universidad.
+Este proyecto es un microservicio Flask para la gestión de documentos, parte de un sistema de microservicios para la universidad
 
 ## Requisitos Previos
 
@@ -8,7 +10,7 @@ Este proyecto es un microservicio Flask para la gestión de documentos, parte de
 - Docker y Docker Compose (opcional, para ejecución con contenedores)
 - k6 (para pruebas de carga)
 
-## Instalación y Configuración
+                                             ** Instalación y Configuración **
 
 ### Variables de Entorno
 
@@ -58,7 +60,6 @@ La aplicación estará disponible en `http://localhost:5002` o a través de Trae
 - `GET /api/v1/certificado/{id}/pdf` - Generar certificado en PDF
 - `GET /api/v1/certificado/{id}/odt` - Generar certificado en ODT
 - `GET /api/v1/certificado/{id}/docx` - Generar certificado en DOCX
-- `GET /api/v1/certificado/{id}/test` - Endpoint de prueba para k6
 
 ## Ejecutar Pruebas
 
@@ -78,7 +79,7 @@ python test/test_endpoints.py
 
 ### Pruebas de Carga con k6
 
-Asegurarse de que la aplicación esté ejecutándose.
+estas pruebas no las pude hacer, porque cuando iniciaba el mock que era la forma de simular para que el microservicio se comunicara con los demas microservicios al estar en local no logre que el docker se conectara con la direcion local del mock
 
 Pruebas de carga normales:
 ```bash
@@ -96,7 +97,6 @@ Las pruebas unitarias usan el contexto de testing (`FLASK_CONTEXT=testing`).
 
 Las pruebas de k6 requieren que la aplicación esté ejecutándose en `http://localhost:5002`.
 
-## Arquitectura
 
 - **Flask**: Framework web
 - **Redis**: Cache y almacenamiento temporal
@@ -105,10 +105,6 @@ Las pruebas de k6 requieren que la aplicación esté ejecutándose en `http://lo
 - **Traefik**: Proxy reverso y load balancer
 - **Docker**: Contenedorización
 
-## Dependencias Externas
-
 Este microservicio depende de otros microservicios:
 - Microservicio de Alumnos (MS_ALUMNO_URL)
 - Microservicio Académico (MS_ACADEMICA_URL)
-
-Asegurarse de que estos servicios estén ejecutándose antes de iniciar este microservicio.

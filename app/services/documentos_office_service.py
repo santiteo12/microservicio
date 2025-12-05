@@ -15,7 +15,6 @@ logger = logging.getLogger(__name__)
 redis_client = redis.Redis(host=current_app.config.get('REDIS_HOST', 'localhost'), port=current_app.config.get('REDIS_PORT', 6379), db=0)
 
 def url_fetcher(url):
-    """Custom URL fetcher for WeasyPrint that caches PNGs in Redis."""
     if url.scheme == 'file':
         path = url.path
         if path.startswith('/'):
@@ -42,7 +41,6 @@ def url_fetcher(url):
     return HTML.default_url_fetcher(url)
 
 class Document(ABC):
-    """Interfaz base para generadores de documentos."""
     @staticmethod
     @abstractmethod
     def generar(plantilla: str, context: dict, tipo: str) -> BytesIO:
