@@ -1,0 +1,103 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Virtual environments
+.venv
+venv/
+ENV/
+env/
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+.project
+.pydevproject
+.settings/
+*.iml
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+*.cover
+.hypothesis/
+
+# Docker
+docker-compose.override.yml
+.docker/
+
+# Temporary files
+*.tmp
+*.bak
+*.log
+*.pid
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+pgadmin_db/
+postgres_data/
+
+# Redis
+redis_data/
+redis/data/*
+
+# OS
+.DS_Store
+Thumbs.db
+.directory
+
+# Documentos generados
+*.pdf
+*.docx
+*.xlsx
+*.doc
+
+# Node (si usas assets con npm)
+node_modules/
+package-lock.json
+npm-debug.log
+
+# Caches
+.cache/
+*.cache
+
+# Seguridad
+*.key
+*.pem
+*.crt
+secrets.json
+config/secrets/

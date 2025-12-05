@@ -1,79 +1,113 @@
-from abc import ABC, abstractmethod
-from io import BytesIO
 import os
-from docxtpl import DocxTemplate
-import jinja2
-from python_odt_template import ODTTemplate
-from weasyprint import HTML
+import tempfile
+from io import BytesIO
+from abc import ABC, abstractmethod
+import redis
+
 from flask import current_app, render_template, url_for
-from python_odt_template.jinja import get_odt_renderer
+from weasyprint import HTML
+from docxtpl import DocxTemplate
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Redis client for caching
+redis_client = redis.Redis(host=current_app.config.get('REDIS_HOST', 'localhost'), port=current_app.config.get('REDIS_PORT', 6379), db=0)
+
+def url_fetcher(url):
+    """Custom URL fetcher for WeasyPrint that caches PNGs in Redis."""
+    if url.scheme == 'file':
+        path = url.path
+        if path.startswith('/'):
+            path = path[1:]  # Remove leading slash
+        full_path = os.path.join(current_app.root_path, path)
+
+        # Check if it's a PNG and if cached in Redis
+        if full_path.endswith('.png'):
+            cache_key = f"png:{full_path}"
+            cached_data = redis_client.get(cache_key)
+            if cached_data:
+                logger.info(f"Loading PNG from Redis cache: {full_path}")
+                return {'file_obj': BytesIO(cached_data), 'mime_type': 'image/png'}
+
+            # Load from file and cache
+            if os.path.exists(full_path):
+                with open(full_path, 'rb') as f:
+                    data = f.read()
+                redis_client.set(cache_key, data, ex=3600)  # Cache for 1 hour
+                logger.info(f"Cached PNG in Redis: {full_path}")
+                return {'file_obj': BytesIO(data), 'mime_type': 'image/png'}
+
+    # Fallback to default
+    return HTML.default_url_fetcher(url)
 
 class Document(ABC):
+    """Interfaz base para generadores de documentos."""
     @staticmethod
     @abstractmethod
-    def generar(carpeta:str, plantilla:str, context:dict, tipo:str) -> BytesIO:
-        pass
-
+    def generar(plantilla: str, context: dict, tipo: str) -> BytesIO:
+        """
+        - plantilla: nombre de la plantilla (sin extensión; busca en templates/certificado/)
+        - context: dict con datos ya armados (nombre, apellido, especialidad, facultad, etc.)
+        - tipo: tipo de documento ('pdf', 'docx', 'odt')
+        - return: BytesIO con el contenido del documento
+        """
+        raise NotImplementedError
 
 class PDFDocument(Document):
     @staticmethod
-    def generar(carpeta:str, plantilla:str, context:dict) -> BytesIO:
-        html_string = render_template(f'{carpeta}/{plantilla}.html', 
-                                context=context)
-        base_url = url_for('static', filename='', _external=True)
-        bytes_data = HTML(string=html_string, base_url=base_url).write_pdf()
-        pdf_io = BytesIO(bytes_data)
-        return pdf_io
-    
-class ODTDocument(Document):
-    @staticmethod
-    def generar(carpeta:str, plantilla:str, context:dict) -> BytesIO:
-        odt_renderer = get_odt_renderer(media_path=url_for('static', filename='media'))
-        path_template = os.path.join(current_app.root_path, f'{carpeta}', f'{plantilla}.odt')
-    
-        odt_io = BytesIO()
-        import tempfile
-        with tempfile.NamedTemporaryFile(suffix='.odt', delete=False) as temp_file:
-            temp_path = temp_file.name
+    def generar(plantilla: str, context: dict, tipo: str) -> BytesIO:
+        try:
+            # Renderiza template Jinja2 como HTML
+            html_string = render_template(f"certificado/{plantilla}.html", **context)
+            # base_url para que WeasyPrint resuelva static/ (imágenes, CSS)
+            base_url = f"file://{current_app.root_path}/static/"
+            bytes_pdf = HTML(string=html_string, base_url=base_url, url_fetcher=url_fetcher).write_pdf()
+            pdf_io = BytesIO(bytes_pdf)
+            pdf_io.seek(0)
+            return pdf_io
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error generando PDF: {str(e)}")
+            logger.error(f"Template: {plantilla}")
+            logger.error(f"Context keys: {list(context.keys())}")
+            raise e
 
-        with ODTTemplate(path_template) as template:
-            odt_renderer.render( template,
-                context=context
-            )
-            template.pack(temp_path)
-            with open(temp_path, 'rb') as f:
-                odt_io.write(f.read())
-            
-        os.unlink(temp_path)
-        odt_io.seek(0)
-        return odt_io
-
-class DOCXDocument(Document):
+class OfficeDocument(Document):
     @staticmethod
-    def generar(carpeta:str, plantilla:str, context:dict) -> BytesIO:
-        path_template = os.path.join(current_app.root_path, f'{carpeta}', f'{plantilla}.docx')
+    def generar(plantilla: str, context: dict, tipo: str) -> BytesIO:
+        path_template = os.path.join(
+            current_app.root_path,
+            "templates",
+            "certificado",
+            f"{plantilla}.odt"
+        )
         doc = DocxTemplate(path_template)
-        
-        docx_io = BytesIO()
-        import tempfile
-        with tempfile.NamedTemporaryFile(suffix='.docx', delete=False) as temp_file:
-            temp_path = temp_file.name
 
-        jinja_env = jinja2.Environment()
-    
-        doc.render(context, jinja_env)
-        doc.save(temp_path)
-        with open(temp_path, 'rb') as f:
-                docx_io.write(f.read())
-            
-        os.unlink(temp_path)
-        docx_io.seek(0)
-        return docx_io
-    
-def obtener_tipo_documento(tipo: str) -> Document:
+        suffix = ".odt" if tipo == "odt" else ".docx"
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+            temp_path = tmp.name
+
+        try:
+            doc.render(context)
+            doc.save(temp_path)
+            with open(temp_path, "rb") as f:
+                buf = BytesIO(f.read())
+                buf.seek(0)
+        finally:
+            try:
+                os.remove(temp_path)
+            except Exception:
+                pass
+
+        return buf
+
+def obtener_tipo_documento(tipo: str):
+    """Factory que devuelve la clase según tipo ('pdf', 'docx' o 'odt')."""
     tipos = {
-        'pdf': PDFDocument,
-        'odt': ODTDocument,
-        'docx': DOCXDocument
+        "pdf": PDFDocument,
+        "docx": OfficeDocument,
+        "odt": OfficeDocument,
     }
     return tipos.get(tipo)

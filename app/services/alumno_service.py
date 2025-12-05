@@ -32,9 +32,6 @@ class AlumnoService:
         alumno_existente.fecha_ingreso = alumno.fecha_ingreso
         return alumno_existente
         
-    @staticmethod
-    def borrar_por_id(id: int) -> bool:
-        return AlumnoRepository.borrar_por_id(id)
     
     @staticmethod
     def generar_certificado_alumno_regular(id: int, tipo: str) -> BytesIO:
@@ -48,10 +45,13 @@ class AlumnoService:
         documento = obtener_tipo_documento(tipo)
         if not documento:
             return None
+        if tipo == 'pdf':
+            plantilla = 'certificado_pdf'
+        else:
+            plantilla = 'certificado_plantilla'
         return documento.generar(
-            carpeta='certificado',
-            plantilla=f'certificado_{tipo}',
-            context=context
+            plantilla,
+            context
         )
 
     @staticmethod
@@ -62,6 +62,7 @@ class AlumnoService:
 
     @staticmethod
     def __obtener_alumno_compat(alumno: Alumno) -> dict:
+        from flask import url_for
         # Si el alumno tiene especialidad/facultad/universidad, usarlas
         especialidad = getattr(alumno, 'especialidad', None)
         facultad = getattr(especialidad, 'facultad', None) if especialidad else None
@@ -89,5 +90,6 @@ class AlumnoService:
             "especialidad": especialidad,
             "facultad": facultad,
             "universidad": universidad,
-            "fecha": AlumnoService.__obtener_fecha_actual()
+            "fecha": AlumnoService.__obtener_fecha_actual(),
+            "url_base": url_for("static", filename="", _external=True)
         }

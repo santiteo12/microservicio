@@ -4,8 +4,13 @@ services:
             context: ..
             dockerfile: Dockerfile
         image: gestion-documentos:v1.0.1
+
         deploy:
-            replicas: 1
+           replicas: 2
+
+        ports:
+          - "5002:5002"
+
         networks:
             mired:
                 aliases:
@@ -14,20 +19,22 @@ services:
             - REDIS_HOST=${REDIS_HOST}
             - REDIS_PORT=${REDIS_PORT}
             - REDIS_PASSWORD=${REDIS_PASSWORD}
-            - ACADEMICA_HOST=${ACADEMICA_HOST}
-            - ALUMNOS_HOST=${ALUMNOS_HOST}
+            - MS_ALUMNO_URL=${MS_ALUMNO_URL}
+            - MS_ACADEMICA_URL=${MS_ACADEMICA_URL}
         labels:
             - "traefik.enable=true"
             - "traefik.http.routers.documentos-service.rule=Host(`documentos.universidad.localhost`)"
             - "traefik.http.routers.documentos-service.tls=true"
             - "traefik.http.services.documentos-service.loadbalancer.server.port=5002"
+            # Patron Circuit Breaker
             - "traefik.http.middlewares.documentos-service.circuitbreaker.expression=LatencyAtQuantileMS(50.0) > 100"
             - "traefik.http.middlewares.documentos-service.circuitbreaker.expression=ResponseCodeRatio(500, 600, 0, 600) > 0.25"
             - "traefik.http.middlewares.documentos-service.circuitbreaker.expression=NetworkErrorRatio() > 0.5"
             - "traefik.http.middlewares.documentos-service.retry.attempts=4"
-            - "traefik.http.middlewares.documentos-service.retry.initialinterval=100ms"
-            - "traefik.docker.network=mired"
+            - "traefik.http.middlewares.documentos-service.retry.initialinterval=100ms"            
+            - "traefik.docker.network=mirred"
+
 
 networks:
     mired:
-        external: true
+      external: true
